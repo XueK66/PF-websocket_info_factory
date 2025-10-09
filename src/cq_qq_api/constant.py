@@ -4,7 +4,13 @@ DEFAULT_CONFIG = {
     "post_path": "",
     "token": "",
     "language": "zh",
-    "max_wait_time": 5
+    "max_wait_time": 5,
+    # WSS/SSL related options
+    "use_ssl": False,     # whether to use wss (single parameter)
+    "verify": True,       # when using wss, whether to verify server certs
+    "ca_certs": "",     # optional path to CA bundle
+    "sslopt": {},         # optional dict of extra ssl options passed to websocket-client
+    "reconnect": 5        # reconnect value passed to run_forever (if supported)
 }
 
 DEFAULT_TRANSLATION = {
@@ -14,7 +20,12 @@ DEFAULT_TRANSLATION = {
         "post_path": ["Endpoint", "host:port/Endpoint (一般不用动)"],
         "token": ["token", "QQ 的加密 token"],
         "language": ["language", ""],
-        "max_wait_time": ["API 最长等待时间", "单位（秒）"]
+        "max_wait_time": ["API 最长等待时间", "单位（秒）"],
+        "use_ssl": ["use_ssl", "是否使用 wss（布尔）"],
+        "verify": ["verify", "wss 时是否校验证书（布尔，默认 True）"],
+        "ca_certs": ["ca_certs", "CA 证书路径（可选）"],
+        "sslopt": ["sslopt", "额外的 sslopt 字典（高级）"],
+        "reconnect": ["reconnect", "重连次数或策略（传给 run_forever）"]
     },
     "en_us": {
         "host": ["host", "IP address"],
@@ -22,7 +33,12 @@ DEFAULT_TRANSLATION = {
         "post_path": ["Endpoint", "host:port/Endpoint"],
         "token": ["token", "QQ token"],
         "language": ["language", ""],
-        "max_wait_time": ["API maximum wait time", "/second"]
+        "max_wait_time": ["API maximum wait time", "/second"],
+        "use_ssl": ["use_ssl", "Whether to use wss (boolean)"],
+        "verify": ["verify", "Whether to verify server certs when using wss (boolean, default True)"],
+        "ca_certs": ["ca_certs", "Path to CA bundle (optional)"],
+        "sslopt": ["sslopt", "Extra sslopt dict passed to websocket-client (advanced)"],
+        "reconnect": ["reconnect", "Reconnect count/strategy passed to run_forever"]
     }
 }
 

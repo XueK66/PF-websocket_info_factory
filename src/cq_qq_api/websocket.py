@@ -1,6 +1,7 @@
 import json
 import logging
 import threading
+import ssl
 import websocket
 
 from .bot import bot
@@ -21,9 +22,17 @@ class QQWebSocketConnector:
             server.logger.warning(LANGUAGE["en"]["language_not_found"].format(self.language))
             self.language = "en"
         
+        # determine scheme using single parameter 'use_ssl' (boolean)
+        use_ssl = config.get('use_ssl', False)
+        self.scheme = "wss" if use_ssl else "ws"
         self.url = self._build_url(config)
+
         token = config.get("token")
-        self.headers = {"Authorization": f"Bearer {token}"} if token else None
+        # WebSocketApp accepts headers as list of strings; convert dict to list for compatibility
+        if token:
+            self.headers = [f"Authorization: Bearer {token}"]
+        else:
+            self.headers = None
 
         self.bot = bot(self.send_message, max_wait_time=self._get_max_wait_time(config))
 
@@ -38,7 +47,8 @@ class QQWebSocketConnector:
         host = config.get("host")
         port = config.get("port")
         post_path = config.get("post_path")
-        url = f"ws://{host}:{port}"
+        scheme = getattr(self, "scheme", "ws") or "ws"
+        url = f"{scheme}://{host}:{port}"
         if post_path:
             url += f"/{post_path}"
 
@@ -58,7 +68,30 @@ class QQWebSocketConnector:
             on_open=self.on_open
         )
 
-        self.listener_thread = threading.Thread(target=self.ws.run_forever, kwargs={'reconnect': 5})
+        # prepare run_forever kwargs (support ssl for wss)
+        run_kwargs = {}
+        # reconnect value is optional in config, default to 5 if supported by websocket-client
+        run_kwargs['reconnect'] = self.config.get('reconnect', 5)
+
+        if self.scheme and self.scheme.lower().startswith('wss'):
+            # Configure SSL options
+            verify = self.config.get('verify', True)
+            sslopt = {}
+            if not verify:
+                sslopt['cert_reqs'] = ssl.CERT_NONE
+            else:
+                sslopt['cert_reqs'] = ssl.CERT_REQUIRED
+                ca_certs = self.config.get('ca_certs')
+                if ca_certs:
+                    sslopt['ca_certs'] = ca_certs
+
+            # allow passing additional ssl options from config
+            extra_sslopt = self.config.get('sslopt') or {}
+            sslopt.update(extra_sslopt)
+
+            run_kwargs['sslopt'] = sslopt
+
+        self.listener_thread = threading.Thread(target=self.ws.run_forever, kwargs=run_kwargs)
         self.listener_thread.start()
         self.server.logger.info(LANGUAGE[self.language]["start_connect"])
 
